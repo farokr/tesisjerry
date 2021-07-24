@@ -24,11 +24,26 @@ def eda():
     
     if st.checkbox("Show Columns Histogram"):
         selected_columns = st.selectbox("Select Column",column)
-        if selected_columns != '':
+        if selected_columns == 'ASAL_SEKOLAH':
+            tmp = df['ASAL_SEKOLAH'].value_counts()
+            tmp2 = pd.DataFrame({'ASAL_SEKOLAH':tmp.index,'JUMLAH':tmp.values})
+            fig4 = plt.figure(figsize=(5,24))
+            sns.barplot(y='ASAL_SEKOLAH',x='JUMLAH',data=tmp2)
+            st.write(fig4)
+        
+        elif selected_columns == 'KOTA_LAHIR':
+            tmp = df['KOTA_LAHIR'].value_counts()
+            tmp2 = pd.DataFrame({'KOTA_LAHIR':tmp.index,'JUMLAH':tmp.values})
+            fig4 = plt.figure(figsize=(5,12))
+            sns.barplot(y='KOTA_LAHIR',x='JUMLAH',data=tmp2)
+            st.write(fig4)
+            
+        elif selected_columns != '':
             fig4= plt.figure()
             sns.countplot(x = selected_columns, data=df)
             plt.xticks(rotation=45,ha='right')
             st.write(fig4)
+            
 
 def kmeans():
     st.header('K-Means')
