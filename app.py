@@ -9,14 +9,56 @@ from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
 from sklearn import metrics
 
-from kmodes.kmodes import KModes
+import pickle
+import base64
 
-column = ['KOTA_LAHIR','AGAMA', 'KECAMATAN', 'ANGKATAN', 'TAHUN_RAPORT_3', 'BIDANG_STUDI_KEAHLIAN','PROGRAM_STUDI_KEAHLIAN', 'KOMPETENSI_KEAHLIAN','ASAL_SEKOLAH']
-    
+import io
+
+palet = 'coolwarm'
+#column = ['KOTA_LAHIR','AGAMA', 'KECAMATAN', 'ANGKATAN', 'TAHUN_RAPORT_3', 'BIDANG_STUDI_KEAHLIAN','PROGRAM_STUDI_KEAHLIAN', 'KOMPETENSI_KEAHLIAN','ASAL_SEKOLAH']
+column = ['jenis kelamin', 'kota lahir', 'agama','kecamatan', 'angkatan', 'tahun raport 3', 'bidang studi keahlian','program studi keahlian', 'kompetensi keahlian', 'asal sekolah'] 
+
+#master data kode inisialisasi
+agama = pd.read_csv('agama.csv',sep=';').set_index('agama').to_dict()['inisial']
+kota_kelahiran = pd.read_csv('kota_kelahiran.csv',sep=';').set_index('kota_kelahiran').to_dict()['inisial']
+kecamatan = pd.read_csv('kecamatan.csv',sep=';').set_index('kecamatan').to_dict()['inisial']
+tahun_angkatan = pd.read_csv('tahun_angkatan.csv',sep=';').set_index('tahun_angkatan').to_dict()['inisial']
+tahun_raport = pd.read_csv('tahun_raport.csv',sep=';').set_index('tahun_raport').to_dict()['inisial']
+asal_sekolah = pd.read_csv('asal_sekolah.csv',sep=';').set_index('asal_sekolah').to_dict()['inisial']
+bidang_studi_keahlian = pd.read_csv('bidang_studi_keahlian.csv',sep=';').set_index('bidang_studi_keahlian').to_dict()['inisial']
+program_studi_keahlian = pd.read_csv('program_studi_keahlian.csv',sep=';').set_index('program_studi_keahlian').to_dict()['inisial']
+kompetensi_keahlian = pd.read_csv('kompetensi_keahlian.csv',sep=';').set_index('kompetensi_keahlian').to_dict()['inisial']
+
+def proses_data(df):
+    df['agama'] = df['agama'].str.lower().replace(agama)
+    df['jenis kelamin']= df['jenis kelamin'].str.lower().replace({'p':1, 'l': 2})
+    df['kota lahir'] = df['kota lahir'].str.lower().replace(kota_kelahiran)
+    df['kecamatan'] = df['kecamatan'].str.lower().replace(kecamatan)
+    df['tahun raport 3'] = df['tahun raport 3'].replace(tahun_raport)
+    df['angkatan'] = df['angkatan'].replace(tahun_angkatan)
+    df['bidang studi keahlian'] = df['bidang studi keahlian'].str.lower().replace(bidang_studi_keahlian)
+    df['program studi keahlian'] = df['program studi keahlian'].str.lower().replace(program_studi_keahlian)
+    df['kompetensi keahlian'] = df['kompetensi keahlian'].str.lower().replace(kompetensi_keahlian)
+    df['asal sekolah'] = df['asal sekolah'].str.lower().replace(asal_sekolah)
+    df = df.drop(['no','nama peserta didik'],axis=1)
+    return df 
+
+def get_table_download_link(df):
+    towrite = io.BytesIO()
+    df.to_excel(towrite, encoding='utf-8', index=False, header=True, engine='xlsxwriter')
+    towrite.seek(0)  # reset pointer
+    #csv = df.to_csv(index=False,sep=';')
+    b64 = base64.b64encode(towrite.read()).decode()
+    new_filename = "datahasil.xlsx"
+    href= f'<a href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64}" download="{new_filename}">Download file hasil clustering</a>'
+
+    #href = f'<a href="data:file/csv;base64,{b64}" download="{new_filename}">Download file hasil clustering</a>'
+    return href
+#end of get_table_download_link
     
 def eda():
     st.header('Datasets')
-    df = pd.read_csv('data_siswa_awal.csv',sep=';')
+    df = pd.read_csv('data_siswa.csv',sep=';')
     
     st.subheader('Data Awal '+str(df.shape))
     st.write(df.sample(10));
@@ -24,18 +66,18 @@ def eda():
     
     if st.checkbox("Show Columns Histogram"):
         selected_columns = st.selectbox("Select Column",column)
-        if selected_columns == 'ASAL_SEKOLAH':
-            tmp = df['ASAL_SEKOLAH'].value_counts()
-            tmp2 = pd.DataFrame({'ASAL_SEKOLAH':tmp.index,'JUMLAH':tmp.values})
+        if selected_columns == 'asal sekolah':
+            tmp = df['asal sekolah'].value_counts()
+            tmp2 = pd.DataFrame({'asal sekolah':tmp.index,'JUMLAH':tmp.values})
             fig4 = plt.figure(figsize=(5,24))
-            sns.barplot(y='ASAL_SEKOLAH',x='JUMLAH',data=tmp2)
+            sns.barplot(y='asal sekolah',x='JUMLAH',data=tmp2)
             st.write(fig4)
         
-        elif selected_columns == 'KOTA_LAHIR':
-            tmp = df['KOTA_LAHIR'].value_counts()
-            tmp2 = pd.DataFrame({'KOTA_LAHIR':tmp.index,'JUMLAH':tmp.values})
+        elif selected_columns == 'kota lahir':
+            tmp = df['kota lahir'].value_counts()
+            tmp2 = pd.DataFrame({'kota lahir':tmp.index,'JUMLAH':tmp.values})
             fig4 = plt.figure(figsize=(5,12))
-            sns.barplot(y='KOTA_LAHIR',x='JUMLAH',data=tmp2)
+            sns.barplot(y='kota lahir',x='JUMLAH',data=tmp2)
             st.write(fig4)
             
         elif selected_columns != '':
@@ -43,15 +85,18 @@ def eda():
             sns.countplot(x = selected_columns, data=df)
             plt.xticks(rotation=45,ha='right')
             st.write(fig4)
-            
+ #snd of eda           
 
 def kmeans():
     st.header('K-Means')
-    df_master = pd.read_csv('data_siswa_awal.csv',sep=';')     
-    df1 = pd.read_csv('data_ready.csv',sep=',')
+    df_master = pd.read_csv('data_siswa.csv',sep=';')     
+    df1 = df_master.copy()
+    df1 = proses_data(df1)
+    pca = PCA(2) #mengubah menajdi 2 kolom
+    df1 = pca.fit_transform(df1) #Transform data
    
      
-    st.subheader('Pemilihan nilai K Menggunakan Elbow Method')
+    st.subheader('Pemilihan nilai K Menggunakan DBI Index')
     distortions = []
     inertias = []
     mapping1 = {}
@@ -59,7 +104,7 @@ def kmeans():
     dbi = []
     slh = []
     
-    K = range(2,9)
+    K = range(2,11)
     for k in K:
         # Building and fitting the model
         kmeanModel = KMeans(n_clusters=k).fit(df1)
@@ -74,53 +119,55 @@ def kmeans():
         dbi.append(metrics.davies_bouldin_score(df1,kmeanModel.labels_))
      
      
-    st.text('Metode Distortion')
-    fig = plt.figure(figsize=(4,2))
-    plt.plot(K,distortions,'bx-')
-    plt.xlabel("Nilai K")
-    plt.ylabel("Distortion")
-    st.write(fig)
+    # st.text('Metode Distortion')
+    # fig = plt.figure(figsize=(4,2))
+    # plt.plot(K,distortions,'bx-')
+    # plt.xlabel("Nilai K")
+    # plt.ylabel("Distortion")
+    # st.write(fig)
     
     
-    st.text('Metode Inertia')
-    fig2 = plt.figure(figsize=(4,2))
-    plt.plot(K, inertias, 'bx-')
-    plt.xlabel("Nilai K")
-    plt.ylabel('Inertia')
-    st.write(fig2)
+    # st.text('Metode Inertia')
+    # fig2 = plt.figure(figsize=(4,2))
+    # plt.plot(K, inertias, 'bx-')
+    # plt.xlabel("Nilai K")
+    # plt.ylabel('Inertia')
+    # st.write(fig2)
     
-    st.text('Metode DBI')
+    
+    # st.text('Metode Silhouette')
+    # fig2 = plt.figure(figsize=(4,2))
+    # plt.plot(K, slh, 'bx-')
+    # plt.xlabel("Nilai K")
+    # plt.ylabel('Silhouette')
+    # st.write(fig2)
+    
     fig2 = plt.figure(figsize=(4,2))
     plt.plot(K, dbi, 'bx-')
     plt.xlabel("Nilai K")
     plt.ylabel('DBI')
     st.write(fig2)
+    st.subheader('K optimal = 7')
     
-    st.text('Metode Silhouette')
-    fig2 = plt.figure(figsize=(4,2))
-    plt.plot(K, slh, 'bx-')
-    plt.xlabel("Nilai K")
-    plt.ylabel('Silhouette')
-    st.write(fig2)
 
-    st.header('K-Means Modelling')
-    k_value  = st.slider('Nilai K', min_value=3, max_value=10, step=1, value=4)
+
+    st.header('Simulasi K-Means Model')
+    k_value  = st.slider('Nilai K', min_value=2, max_value=10, step=1, value=7)
     
 
     model = KMeans(n_clusters=k_value,random_state=99) # isnisialisasi Kmeans dgn  nilai K yg dipilih
-    label = model.fit_predict(df1) #proses Clustering
-    pca = PCA(2) #mengubah menajdi 2 kolom
-    dfnp = pca.fit_transform(df1) #Transform data
-    center = pca.fit_transform(model.cluster_centers_)
+    model.fit(df1) #proses Clustering
+    label = model.predict(df1) #proses Clustering
+    center = model.cluster_centers_
     
     #dibuat menjadi dataFrame
-    df_master['x1'] = dfnp[:,0]
-    df_master['y1'] = dfnp[:,1]
+    df_master['x1'] = df1[:,0]
+    df_master['y1'] = df1[:,1]
     df_master['label'] = label
     
-    
+
     fig3= plt.figure()
-    sns.scatterplot(x='x1', y='y1',hue='label',data=df_master,alpha=1, s=40, palette='deep')
+    sns.scatterplot(x='x1', y='y1',hue='label',data=df_master,alpha=1, s=40, palette=palet)
     plt.scatter(x=center[:, 0], y=center[:, 1], s=100, c='black', ec='red',label='centroid')
     plt.legend(bbox_to_anchor=(1,1), loc="upper left")
     st.write(fig3)
@@ -133,104 +180,90 @@ def kmeans():
     cluster.sort()
 
     
-    choice = st.selectbox("Pilih Kluster",cluster)
+    choice = st.selectbox("Pilih Cluster",cluster)
     res = df_master.loc[df_master['label'] == choice]
-    st.subheader('Kluster '+str(choice)+' '+str(res.shape))
+    st.subheader('Cluster '+str(choice)+' '+str(res.shape))
     st.write(res.sample(10))
-     
-     
-     
-     
-def kmodes():
-    st.header('K-Modes')
-    df_master = pd.read_csv('data_siswa_awal.csv',sep=';')
-    df = X = pd.read_csv('data_ready.csv',sep=',')
     
-    cost = []
-    dbi = []
-    slh = []
-    K = range(2,9)
- 
-    for k in K:
-        kmode = KModes(n_clusters=k, init = "Cao", n_init = 1)
-        kmode.fit_predict(df)
-        cost.append(kmode.cost_)
-        #evaluasi silhouette
-        slh.append(metrics.silhouette_score(df,kmode.labels_))
-        #evaluasi DBI
-        dbi.append(metrics.davies_bouldin_score(df,kmode.labels_))
+#end of kmeans
+    
+def apps():
+    #k_value = int(st.text_input('Nilai K:',value=3))
+    data = st.file_uploader("Upload a Dataset", type=["csv"])
+    if data is not None:
         
-    
-    st.text('The Elbow Method using K-modes Cost')
-    fig2a = plt.figure(figsize=(4,2))
-    plt.plot(K, cost, 'bx-')
-    plt.xlabel('Values of K')
-    plt.ylabel('Cost')
-    st.write(fig2a)
-    
-    st.text('Metode DBI')
-    fig2 = plt.figure(figsize=(4,2))
-    plt.plot(K, dbi, 'bx-')
-    plt.xlabel("Nilai K")
-    plt.ylabel('DBI')
-    st.write(fig2)
-    
-    st.text('Metode Silhouette')
-    fig2 = plt.figure(figsize=(4,2))
-    plt.plot(K, slh, 'bx-')
-    plt.xlabel("Nilai K")
-    plt.ylabel('Silhouette')
-    st.write(fig2)
+        
+        df = pd.read_csv(data,sep=';')
+        df1 = df.copy()
+        df1 = proses_data(df1)
+        st.dataframe(df)
+        #model = pickle.load(open('model_save.pkl', 'rb'))
+        #label = model.predict(df1)
+        
+        pca = PCA(2) #mengubah menajdi 2 kolom
+        df1 = pca.fit_transform(df1) #Transform data
+        
+        # model = KMeans(n_clusters=k_value,random_state=101)
+        # model.fit(df1)
+        # label = model.predict(df1)
+        # center = model.cluster_centers_
+        
+        model = pickle.load(open('model.pkl', 'rb'))
+        label = model.predict(df1)
+        center = model.cluster_centers_
+        
+        #dibuat menjadi dataFrame
+        df['x1'] = df1[:,0]
+        df['y1'] = df1[:,1]
+        df['cluster'] = label
+        k_value2 = len(df['cluster'].unique())
+        st.write('Proses Dimulai...')
+        for index, row in df.iterrows():
+            st.write(str(row['no'])+'... cluster: ',str(row['cluster']))
+        
+        st.write('Proses Selesai')
+        fig3= plt.figure()
+        # sns.scatterplot(x='x1', y='y1',hue='cluster',data=df,alpha=1, s=40, palette=palet)
+        # plt.scatter(x=center[:, 0], y=center[:, 1], s=100, c='black', ec='red',label='centroid')
+        # plt.legend(bbox_to_anchor=(1,1), loc="upper left")
+        ax = sns.scatterplot(x='x1', y='y1',hue='cluster',data=df,alpha=1, s=50,palette=palet)
+        ax = sns.scatterplot(x=center[:, 0], y=center[:, 1],hue=range(k_value2), s=200, ec='black',palette=palet, legend=False,label = 'Centroids', ax=ax)
+        plt.legend(bbox_to_anchor=(1,1), loc="upper left")
+        st.write(fig3)
 
-    st.header('K-Modes Modelling')
-    
-    k_value  = st.slider('Nilai K', min_value=3, max_value=10, step=1, value=4)
-    model = KModes(n_clusters=k_value, init = "Cao", n_init = 1, verbose=1,random_state=99)# isnisialisasi Kmodes dgn  nilai K yg dipilih
-    label = model.fit_predict(X) #proses Clustering
-    
-    
-    pca = PCA(2) #mengubah menajdi 2 kolom
-    dfnp = pca.fit_transform(X) #Transform data
-    center = pca.fit_transform(model.cluster_centroids_)
-    
-    #dibuat menjadi dataFrame
-    df_master['x1'] = dfnp[:,0]
-    df_master['y1'] = dfnp[:,1]
-    df_master['label'] = label
-    
-    
-    fig3a= plt.figure()
-    sns.scatterplot(x='x1', y='y1',hue='label',data=df_master,alpha=1, s=40, palette='deep')
-    plt.scatter(x=center[:, 0], y=center[:, 1], s=100, c='black', ec='red',label='centroid')
-    plt.legend(bbox_to_anchor=(1,1), loc="upper left")
-    st.write(fig3a)
-    
-    fig4a= plt.figure()
-    sns.countplot(x ='label', data=df_master)
-    st.write(fig4a)
+        fig4= plt.figure()
+        sns.countplot(x ='cluster', data=df)
+        st.write(fig4)
 
-    cluster2 = df_master['label'].unique()
-    cluster2.sort()
+        cluster = df['cluster'].unique()
+        cluster.sort()
     
-    choice2 = st.selectbox("Pilih Kluster",cluster2)
-    res = df_master.loc[df_master['label'] == choice2]
-    st.subheader('Kluster '+str(choice2)+' '+str(res.shape))
-    st.write(res.sample(10))
-    
-    
+        
+        choice = st.selectbox("Pilih Cluster",cluster)
+        res = df.loc[df['cluster'] == choice]
+        st.subheader('Cluster '+str(choice)+' '+str(res.shape))
+        st.dataframe(res)
+        
+
+        
+        
+        st.markdown(get_table_download_link(df), unsafe_allow_html=True)
+        
+#end of apps
     
 def main():
+    """ Streamlit Pelanggaran Pilkada Jabar """
 
-    activities = ['EDA','K-Means','K-Modes']	
+    activities = ['EDA','K-Means','Aplikasi Perhitungan']
     choice = st.sidebar.selectbox("Select Activities",activities)
     
     if choice == 'EDA':
         eda()
     elif choice == 'K-Means':
         kmeans()
-    elif choice == 'K-Modes':
-        kmodes()
+    elif choice == 'Aplikasi Perhitungan':
+        apps()
         
 
 if __name__ == '__main__':
-	main()
+    main()
