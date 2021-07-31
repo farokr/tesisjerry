@@ -182,13 +182,18 @@ def kmeans():
     
 
     fig3= plt.figure()
-    sns.scatterplot(x='x1', y='y1',hue='label',data=df_master,alpha=1, s=40, palette=palet)
-    plt.scatter(x=center[:, 0], y=center[:, 1], s=100, c='black', ec='red',label='centroid')
+    ax = sns.scatterplot(x='x1', y='y1',hue='label',data=df_master,alpha=1, s=40, palette=palet)
+    ax = plt.scatter(x=center[:, 0], y=center[:, 1], s=100, c='black', ec='red',label='centroid')
     plt.legend(bbox_to_anchor=(1,1), loc="upper left")
     st.write(fig3)
     
     fig4= plt.figure()
-    sns.countplot(x ='label', data=df_master)
+    ax = sns.countplot(x ='label', data=df_master)
+    for p in ax.patches:
+        _x = p.get_x() + p.get_width() / 2
+        _y = p.get_y() + p.get_height()
+        value = int(p.get_height())
+        ax.text(_x, _y, value, ha="center")   
     st.write(fig4)
     
     cluster = df_master['label'].unique()
@@ -247,7 +252,12 @@ def apps():
         st.write(fig3)
 
         fig4= plt.figure()
-        sns.countplot(x ='cluster', data=df)
+        ax = sns.countplot(x ='cluster', data=df)
+        for p in ax.patches:
+            _x = p.get_x() + p.get_width() / 2
+            _y = p.get_y() + p.get_height()
+            value = int(p.get_height())
+            ax.text(_x, _y, value, ha="center")           
         st.write(fig4)
 
         cluster = df['cluster'].unique()
