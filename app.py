@@ -228,7 +228,7 @@ def apps():
         # label = model.predict(df1)
         # center = model.cluster_centers_
         
-        model = pickle.load(open('model.pkl', 'rb'))
+        model = pickle.load(open('model3.pkl', 'rb'))
         label = model.predict(df1)
         center = model.cluster_centers_
         
