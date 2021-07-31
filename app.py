@@ -14,7 +14,7 @@ import base64
 
 import io
 
-palet = 'coolwarm'
+
 #column = ['KOTA_LAHIR','AGAMA', 'KECAMATAN', 'ANGKATAN', 'TAHUN_RAPORT_3', 'BIDANG_STUDI_KEAHLIAN','PROGRAM_STUDI_KEAHLIAN', 'KOMPETENSI_KEAHLIAN','ASAL_SEKOLAH']
 column = ['jenis kelamin', 'kota lahir', 'agama','kecamatan', 'angkatan', 'tahun raport 3', 'bidang studi keahlian','program studi keahlian', 'kompetensi keahlian', 'asal sekolah'] 
 
@@ -70,33 +70,43 @@ def eda():
             tmp = df['asal sekolah'].value_counts()
             tmp2 = pd.DataFrame({'asal sekolah':tmp.index,'JUMLAH':tmp.values})
             fig4 = plt.figure(figsize=(5,24))
-            sns.barplot(y='asal sekolah',x='JUMLAH',data=tmp2)
+            ax = sns.barplot(y='asal sekolah',x='JUMLAH',data=tmp2)
+            for p in ax.patches:
+                _x = p.get_x() + p.get_width() + 0.5
+                _y = p.get_y() + p.get_height()
+                value = int(p.get_width())
+                ax.text(_x, _y, value, ha="left")
             st.write(fig4)
         
         elif selected_columns == 'kota lahir':
             tmp = df['kota lahir'].value_counts()
             tmp2 = pd.DataFrame({'kota lahir':tmp.index,'JUMLAH':tmp.values})
             fig4 = plt.figure(figsize=(5,12))
-            sns.barplot(y='kota lahir',x='JUMLAH',data=tmp2)
+            ax = sns.barplot(y='kota lahir',x='JUMLAH',data=tmp2)
+            for p in ax.patches:
+                _x = p.get_x() + p.get_width() + 0.5
+                _y = p.get_y() + p.get_height()
+                value = int(p.get_width())
+                ax.text(_x, _y, value, ha="left")
             st.write(fig4)
             
         elif selected_columns != '':
             fig4= plt.figure()
-            sns.countplot(x = selected_columns, data=df)
+            ax = sns.countplot(x = selected_columns, data=df)
+            for rect in ax.patches:
+                ax.text (rect.get_x() + rect.get_width()/2,rect.get_height()+ 1.5,rect.get_height(),horizontalalignment='center', fontsize = 10)
             plt.xticks(rotation=45,ha='right')
             st.write(fig4)
- #snd of eda           
+            
 
 def kmeans():
     st.header('K-Means')
-    df_master = pd.read_csv('data_siswa.csv',sep=';')     
-    df1 = df_master.copy()
-    df1 = proses_data(df1)
-    pca = PCA(2) #mengubah menajdi 2 kolom
-    df1 = pca.fit_transform(df1) #Transform data
+    df_master = pd.read_csv('data_siswa_awal.csv',sep=';')     
+    #df1 = pd.read_csv('data_ready.csv',sep=',')
+    df1 = proses_data(df_master)
    
      
-    st.subheader('Pemilihan nilai K Menggunakan DBI Index')
+    st.subheader('Pemilihan nilai K Menggunakan Elbow Method')
     distortions = []
     inertias = []
     mapping1 = {}
@@ -104,7 +114,7 @@ def kmeans():
     dbi = []
     slh = []
     
-    K = range(2,11)
+    K = range(2,9)
     for k in K:
         # Building and fitting the model
         kmeanModel = KMeans(n_clusters=k).fit(df1)
@@ -142,32 +152,33 @@ def kmeans():
     # plt.ylabel('Silhouette')
     # st.write(fig2)
     
+    st.text('Metode DBI')
     fig2 = plt.figure(figsize=(4,2))
     plt.plot(K, dbi, 'bx-')
     plt.xlabel("Nilai K")
     plt.ylabel('DBI')
     st.write(fig2)
-    st.subheader('K optimal = 7')
     
 
 
-    st.header('Simulasi K-Means Model')
-    k_value  = st.slider('Nilai K', min_value=2, max_value=10, step=1, value=7)
+    st.header('K-Means Modelling')
+    k_value  = st.slider('Nilai K', min_value=3, max_value=10, step=1, value=4)
     
 
     model = KMeans(n_clusters=k_value,random_state=99) # isnisialisasi Kmeans dgn  nilai K yg dipilih
-    model.fit(df1) #proses Clustering
-    label = model.predict(df1) #proses Clustering
-    center = model.cluster_centers_
+    label = model.fit_predict(df1) #proses Clustering
+    pca = PCA(2) #mengubah menajdi 2 kolom
+    dfnp = pca.fit_transform(df1) #Transform data
+    center = pca.fit_transform(model.cluster_centers_)
     
     #dibuat menjadi dataFrame
-    df_master['x1'] = df1[:,0]
-    df_master['y1'] = df1[:,1]
+    df_master['x1'] = dfnp[:,0]
+    df_master['y1'] = dfnp[:,1]
     df_master['label'] = label
     
-
+    
     fig3= plt.figure()
-    sns.scatterplot(x='x1', y='y1',hue='label',data=df_master,alpha=1, s=40, palette=palet)
+    sns.scatterplot(x='x1', y='y1',hue='label',data=df_master,alpha=1, s=40, palette='deep')
     plt.scatter(x=center[:, 0], y=center[:, 1], s=100, c='black', ec='red',label='centroid')
     plt.legend(bbox_to_anchor=(1,1), loc="upper left")
     st.write(fig3)
@@ -180,35 +191,31 @@ def kmeans():
     cluster.sort()
 
     
-    choice = st.selectbox("Pilih Cluster",cluster)
+    choice = st.selectbox("Pilih Kluster",cluster)
     res = df_master.loc[df_master['label'] == choice]
-    st.subheader('Cluster '+str(choice)+' '+str(res.shape))
+    st.subheader('Kluster '+str(choice)+' '+str(res.shape))
     st.write(res.sample(10))
-    
-#end of kmeans
+     
+     
+     
     
 def apps():
-    #k_value = int(st.text_input('Nilai K:',value=3))
+    k_value = int(st.text_input('Nilai K:',value=3))
     data = st.file_uploader("Upload a Dataset", type=["csv"])
     if data is not None:
         
         
         df = pd.read_csv(data,sep=';')
-        df1 = df.copy()
-        df1 = proses_data(df1)
         st.dataframe(df)
+        df1 = proses_data(df)
         #model = pickle.load(open('model_save.pkl', 'rb'))
         #label = model.predict(df1)
         
         pca = PCA(2) #mengubah menajdi 2 kolom
         df1 = pca.fit_transform(df1) #Transform data
         
-        # model = KMeans(n_clusters=k_value,random_state=101)
-        # model.fit(df1)
-        # label = model.predict(df1)
-        # center = model.cluster_centers_
-        
-        model = pickle.load(open('model.pkl', 'rb'))
+        model = KMeans(n_clusters=k_value,random_state=101)
+        model.fit(df1)
         label = model.predict(df1)
         center = model.cluster_centers_
         
@@ -216,39 +223,27 @@ def apps():
         df['x1'] = df1[:,0]
         df['y1'] = df1[:,1]
         df['cluster'] = label
-        k_value2 = len(df['cluster'].unique())
         st.write('Proses Dimulai...')
         for index, row in df.iterrows():
-            st.write(str(row['no'])+'... cluster: ',str(row['cluster']))
-        
+            st.write(str(row['NO'])+'... cluster: ',str(row['cluster']))
         st.write('Proses Selesai')
+        st.dataframe(df)
+        
         fig3= plt.figure()
-        # sns.scatterplot(x='x1', y='y1',hue='cluster',data=df,alpha=1, s=40, palette=palet)
-        # plt.scatter(x=center[:, 0], y=center[:, 1], s=100, c='black', ec='red',label='centroid')
-        # plt.legend(bbox_to_anchor=(1,1), loc="upper left")
-        ax = sns.scatterplot(x='x1', y='y1',hue='cluster',data=df,alpha=1, s=50,palette=palet)
-        ax = sns.scatterplot(x=center[:, 0], y=center[:, 1],hue=range(k_value2), s=200, ec='black',palette=palet, legend=False,label = 'Centroids', ax=ax)
+        sns.scatterplot(x='x1', y='y1',hue='cluster',data=df,alpha=1, s=40, palette='deep')
+        plt.scatter(x=center[:, 0], y=center[:, 1], s=100, c='black', ec='red',label='centroid')
         plt.legend(bbox_to_anchor=(1,1), loc="upper left")
         st.write(fig3)
 
         fig4= plt.figure()
         sns.countplot(x ='cluster', data=df)
         st.write(fig4)
-
-        cluster = df['cluster'].unique()
-        cluster.sort()
-    
-        
-        choice = st.selectbox("Pilih Cluster",cluster)
-        res = df.loc[df['cluster'] == choice]
-        st.subheader('Cluster '+str(choice)+' '+str(res.shape))
-        st.dataframe(res)
-        
-
         
         
         st.markdown(get_table_download_link(df), unsafe_allow_html=True)
         
+        
+    
 #end of apps
     
 def main():
