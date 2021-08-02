@@ -279,10 +279,10 @@ def apps():
 def main():
     """ Streamlit Pelanggaran Pilkada Jabar """
 
-    activities = ['EDA','K-Means','Aplikasi Perhitungan']
+    activities = ['Dataset Siswa','K-Means','Aplikasi Perhitungan']
     choice = st.sidebar.selectbox("Select Activities",activities)
     
-    if choice == 'EDA':
+    if choice == 'Dataset Siswa':
         eda()
     elif choice == 'K-Means':
         kmeans()
