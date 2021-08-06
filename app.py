@@ -57,7 +57,7 @@ def get_table_download_link(df):
 #end of get_table_download_link
     
 def eda():
-    st.header('Datasets')
+    st.header('Dataset Siswa')
     df = pd.read_csv('data_siswa.csv',sep=';')
     
     st.subheader('Data Awal '+str(df.shape))
@@ -170,7 +170,7 @@ def kmeans():
     k_value  = st.slider('Nilai K', min_value=2, max_value=10, step=1, value=7)
     
 
-    model = KMeans(n_clusters=k_value,random_state=99) # isnisialisasi Kmeans dgn  nilai K yg dipilih
+    model = KMeans(n_clusters=k_value,random_state=99,verbose=False) # isnisialisasi Kmeans dgn  nilai K yg dipilih
     model.fit(df1) #proses Clustering
     label = model.predict(df1) #proses Clustering
     center = model.cluster_centers_
@@ -178,17 +178,17 @@ def kmeans():
     #dibuat menjadi dataFrame
     df_master['x1'] = df1[:,0]
     df_master['y1'] = df1[:,1]
-    df_master['label'] = label
+    df_master['cluster'] = label
     
 
     fig3= plt.figure()
-    ax = sns.scatterplot(x='x1', y='y1',hue='label',data=df_master,alpha=1, s=40, palette=palet)
+    ax = sns.scatterplot(x='x1', y='y1',hue='cluster',data=df_master,alpha=1, s=40, palette=palet)
     ax = plt.scatter(x=center[:, 0], y=center[:, 1], s=100, c='black', ec='red',label='centroid')
     plt.legend(bbox_to_anchor=(1,1), loc="upper left")
     st.write(fig3)
     
     fig4= plt.figure()
-    ax = sns.countplot(x ='label', data=df_master)
+    ax = sns.countplot(x ='cluster', data=df_master)
     for p in ax.patches:
         _x = p.get_x() + p.get_width() / 2
         _y = p.get_y() + p.get_height()
@@ -196,14 +196,36 @@ def kmeans():
         ax.text(_x, _y, value, ha="center")   
     st.write(fig4)
     
-    cluster = df_master['label'].unique()
+    cluster = df_master['cluster'].unique()
     cluster.sort()
 
+    st.subheader('Pilih Cluster')
+    choice = st.selectbox("",cluster)
+    res = df_master.loc[df_master['cluster'] == choice]
+    st.subheader('Cluster '+str(choice)+': '+str(res.shape[0]))
+    st.write(res)
     
-    choice = st.selectbox("Pilih Cluster",cluster)
-    res = df_master.loc[df_master['label'] == choice]
-    st.subheader('Cluster '+str(choice)+' '+str(res.shape))
-    st.write(res.sample(10))
+    st.subheader('Profil Data per Cluster')
+    arr_cluster = {}
+    cluster = df_master['cluster'].unique()
+    cluster.sort()
+    for x in cluster:
+        clu = df_master.loc[df_master['cluster'] == x]
+        idx = 'cluster '+str(x)
+        arr_mode = arr_cluster[idx] = {}
+        arr_mode['jenis kelamin'] = clu['jenis kelamin'].mode().iat[0]
+        arr_mode['kota lahir'] = clu['kota lahir'].mode().iat[0]
+        arr_mode['kecamatan'] = clu['kecamatan'].mode().iat[0]
+        arr_mode['agama'] = clu['agama'].mode().iat[0]
+        arr_mode['angkatan'] = clu['angkatan'].mode().iat[0]
+        arr_mode['tahun raport 3'] = clu['tahun raport 3'].mode().iat[0]
+        arr_mode['bidang studi keahlian'] = clu['bidang studi keahlian'].mode().iat[0]
+        arr_mode['program studi keahlian'] = clu['program studi keahlian'].mode().iat[0]
+        arr_mode['kompetensi keahlian'] = clu['kompetensi keahlian'].mode().iat[0]
+        arr_mode['asal sekolah'] = clu['asal sekolah'].mode().iat[0]
+
+    df_cluster = pd.DataFrame(arr_cluster)
+    st.dataframe(df_cluster)
     
 #end of kmeans
     
@@ -217,16 +239,9 @@ def apps():
         df1 = df.copy()
         df1 = proses_data(df1)
         st.dataframe(df)
-        #model = pickle.load(open('model_save.pkl', 'rb'))
-        #label = model.predict(df1)
         
         pca = PCA(2) #mengubah menajdi 2 kolom
         df1 = pca.fit_transform(df1) #Transform data
-        
-        # model = KMeans(n_clusters=k_value,random_state=101)
-        # model.fit(df1)
-        # label = model.predict(df1)
-        # center = model.cluster_centers_
         
         model = pickle.load(open('model7.pkl', 'rb'))
         label = model.predict(df1)
@@ -266,23 +281,51 @@ def apps():
         
         choice = st.selectbox("Pilih Cluster",cluster)
         res = df.loc[df['cluster'] == choice]
-        st.subheader('Cluster '+str(choice)+' '+str(res.shape))
+        st.subheader('Cluster '+str(choice)+': '+str(res.shape[0]))
         st.dataframe(res)
         
-
+        st.subheader('Profil Data per Cluster')
+        arr_cluster = {}
+        cluster = df['cluster'].unique()
+        cluster.sort()
+        for x in cluster:
+            clu = df.loc[df['cluster'] == x]
+            idx = 'cluster '+str(x)
+            arr_mode = arr_cluster[idx] = {}
+            arr_mode['jenis kelamin'] = clu['jenis kelamin'].mode().iat[0]
+            arr_mode['kota lahir'] = clu['kota lahir'].mode().iat[0]
+            arr_mode['kecamatan'] = clu['kecamatan'].mode().iat[0]
+            arr_mode['agama'] = clu['agama'].mode().iat[0]
+            arr_mode['angkatan'] = clu['angkatan'].mode().iat[0]
+            arr_mode['tahun raport 3'] = clu['tahun raport 3'].mode().iat[0]
+            arr_mode['bidang studi keahlian'] = clu['bidang studi keahlian'].mode().iat[0]
+            arr_mode['program studi keahlian'] = clu['program studi keahlian'].mode().iat[0]
+            arr_mode['kompetensi keahlian'] = clu['kompetensi keahlian'].mode().iat[0]
+            arr_mode['asal sekolah'] = clu['asal sekolah'].mode().iat[0]
+    
+        df_cluster = pd.DataFrame(arr_cluster)
+        st.dataframe(df_cluster)
         
         
         st.markdown(get_table_download_link(df), unsafe_allow_html=True)
         
 #end of apps
+
+def home():
+    st.header("Selamat Datang")
+    
+#end of home  
     
 def main():
     """ Streamlit Pelanggaran Pilkada Jabar """
 
-    activities = ['Dataset Siswa','K-Means','Aplikasi Perhitungan']
-    choice = st.sidebar.selectbox("Select Activities",activities)
-    
-    if choice == 'Dataset Siswa':
+    activities = ['Beranda','Dataset Siswa','K-Means','Aplikasi Perhitungan']
+    #choice = st.sidebar.selectbox("Select Activities",activities)
+    st.sidebar.subheader("Menu")
+    choice = st.sidebar.radio('',activities)
+    if choice == 'Beranda':
+        home()
+    elif choice == 'Dataset Siswa':
         eda()
     elif choice == 'K-Means':
         kmeans()
