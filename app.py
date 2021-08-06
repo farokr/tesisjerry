@@ -198,17 +198,9 @@ def kmeans():
     
     cluster = df_master['cluster'].unique()
     cluster.sort()
-
-    st.subheader('Pilih Cluster')
-    choice = st.selectbox("",cluster)
-    res = df_master.loc[df_master['cluster'] == choice]
-    st.subheader('Cluster '+str(choice)+': '+str(res.shape[0]))
-    st.write(res)
     
     st.subheader('Profil Data per Cluster')
     arr_cluster = {}
-    cluster = df_master['cluster'].unique()
-    cluster.sort()
     for x in cluster:
         clu = df_master.loc[df_master['cluster'] == x]
         idx = 'cluster '+str(x)
@@ -225,7 +217,13 @@ def kmeans():
         arr_mode['asal sekolah'] = clu['asal sekolah'].mode().iat[0]
 
     df_cluster = pd.DataFrame(arr_cluster)
-    st.dataframe(df_cluster)
+    st.dataframe(df_cluster)    
+
+    st.subheader('Pilih Cluster')
+    choice = st.selectbox("",cluster)
+    res = df_master.loc[df_master['cluster'] == choice]
+    st.subheader('Cluster '+str(choice)+': '+str(res.shape[0]))
+    st.write(res)
     
 #end of kmeans
     
@@ -274,20 +272,13 @@ def apps():
             value = int(p.get_height())
             ax.text(_x, _y, value, ha="center")           
         st.write(fig4)
+        
 
         cluster = df['cluster'].unique()
         cluster.sort()
-    
-        
-        choice = st.selectbox("Pilih Cluster",cluster)
-        res = df.loc[df['cluster'] == choice]
-        st.subheader('Cluster '+str(choice)+': '+str(res.shape[0]))
-        st.dataframe(res)
         
         st.subheader('Profil Data per Cluster')
         arr_cluster = {}
-        cluster = df['cluster'].unique()
-        cluster.sort()
         for x in cluster:
             clu = df.loc[df['cluster'] == x]
             idx = 'cluster '+str(x)
@@ -305,8 +296,14 @@ def apps():
     
         df_cluster = pd.DataFrame(arr_cluster)
         st.dataframe(df_cluster)
+    
+        st.subheader('Pilih Cluster')
+        choice = st.selectbox("",cluster)
+        res = df.loc[df['cluster'] == choice]
+        st.subheader('Cluster '+str(choice)+': '+str(res.shape[0]))
+        st.dataframe(res)
         
-        
+        st.subheader('Download')
         st.markdown(get_table_download_link(df), unsafe_allow_html=True)
         
 #end of apps
