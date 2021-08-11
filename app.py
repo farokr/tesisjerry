@@ -29,6 +29,7 @@ bidang_studi_keahlian = pd.read_csv('bidang_studi_keahlian.csv',sep=';').set_ind
 program_studi_keahlian = pd.read_csv('program_studi_keahlian.csv',sep=';').set_index('program_studi_keahlian').to_dict()['inisial']
 kompetensi_keahlian = pd.read_csv('kompetensi_keahlian.csv',sep=';').set_index('kompetensi_keahlian').to_dict()['inisial']
 
+#pemrosesan data mentah menjadi data untuk proses
 def proses_data(df):
     df['agama'] = df['agama'].str.lower().replace(agama)
     df['jenis kelamin']= df['jenis kelamin'].str.lower().replace({'p':1, 'l': 2})
@@ -43,6 +44,7 @@ def proses_data(df):
     df = df.drop(['no','nama peserta didik'],axis=1)
     return df 
 
+#fungsi link download
 def get_table_download_link(df):
     towrite = io.BytesIO()
     df.to_excel(towrite, encoding='utf-8', index=False, header=True, engine='xlsxwriter')
@@ -56,7 +58,14 @@ def get_table_download_link(df):
     return href
 #end of get_table_download_link
 
-    
+#fungsi penampil gambar beranda
+@st.cache(allow_output_mutation=True)
+def get_base64_of_bin_file(bin_file):
+    with open(bin_file, 'rb') as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
+
+# bagian menu DATASET SISWA    
 def eda():
     st.header('Dataset Siswa')
     df = pd.read_csv('data_siswa.csv',sep=';')
@@ -103,6 +112,8 @@ def eda():
             st.write(fig4)
  #snd of eda           
 
+
+# bagian menu K-MEANS 
 def kmeans():
     st.header('K-Means')
     df_master = pd.read_csv('data_siswa.csv',sep=';')     
@@ -165,8 +176,6 @@ def kmeans():
     st.write(fig2)
     st.subheader('K optimal = 7')
     
-
-
     st.header('Simulasi K-Means Model')
     k_value  = st.slider('Nilai K', min_value=2, max_value=10, step=1, value=7)
     
@@ -184,7 +193,6 @@ def kmeans():
     cluster = df_master['cluster'].unique()
     cluster.sort()
     
-
     fig3= plt.figure()
     ax = sns.scatterplot(x='x1', y='y1',hue='cluster',data=df_master,alpha=1, s=40, palette=palet)
     ax = sns.scatterplot(x=center[:, 0], y=center[:, 1],hue=range(k_value), s=100, palette=palet, ec='black',label='centroid',legend=False)
@@ -199,8 +207,6 @@ def kmeans():
         value = int(p.get_height())
         ax.text(_x, _y, value, ha="center")   
     st.write(fig4)
-    
-
     
     st.subheader('Profil Data per Cluster')
     arr_cluster = {}
@@ -229,7 +235,8 @@ def kmeans():
     st.write(res)
     
 #end of kmeans
-    
+
+# bagian menu APLIKSI PERHITUNGAN
 def apps():
     #k_value = int(st.text_input('Nilai K:',value=3))
     data = st.file_uploader("Upload a Dataset", type=["csv"])
@@ -311,13 +318,7 @@ def apps():
         
 #end of apps
 
-@st.cache(allow_output_mutation=True)
-def get_base64_of_bin_file(bin_file):
-    with open(bin_file, 'rb') as f:
-        data = f.read()
-    return base64.b64encode(data).decode()
-
-
+# bagian menu BERANDA
 def home():
     #st.title('Download')
     main_bg = "home.jpg"
