@@ -181,15 +181,18 @@ def kmeans():
     df_master['y1'] = df1[:,1]
     df_master['cluster'] = label
     
+    cluster = df_master['cluster'].unique()
+    cluster.sort()
+    
 
     fig3= plt.figure()
     ax = sns.scatterplot(x='x1', y='y1',hue='cluster',data=df_master,alpha=1, s=40, palette=palet)
-    ax = plt.scatter(x=center[:, 0], y=center[:, 1], s=100, c='black', ec='red',label='centroid')
+    ax = sns.scatterplot(x=center[:, 0], y=center[:, 1],hue=range(k_value), s=100, palette=palet, ec='black',label='centroid',legend=False)
     plt.legend(bbox_to_anchor=(1,1), loc="upper left")
     st.write(fig3)
     
     fig4= plt.figure()
-    ax = sns.countplot(x ='cluster', data=df_master)
+    ax = sns.countplot(x ='cluster', data=df_master,palette=palet)
     for p in ax.patches:
         _x = p.get_x() + p.get_width() / 2
         _y = p.get_y() + p.get_height()
@@ -197,8 +200,7 @@ def kmeans():
         ax.text(_x, _y, value, ha="center")   
     st.write(fig4)
     
-    cluster = df_master['cluster'].unique()
-    cluster.sort()
+
     
     st.subheader('Profil Data per Cluster')
     arr_cluster = {}
@@ -266,7 +268,7 @@ def apps():
         st.write(fig3)
 
         fig4= plt.figure()
-        ax = sns.countplot(x ='cluster', data=df)
+        ax = sns.countplot(x ='cluster', data=df,palette=palet)
         for p in ax.patches:
             _x = p.get_x() + p.get_width() / 2
             _y = p.get_y() + p.get_height()
