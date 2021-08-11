@@ -55,6 +55,7 @@ def get_table_download_link(df):
     #href = f'<a href="data:file/csv;base64,{b64}" download="{new_filename}">Download file hasil clustering</a>'
     return href
 #end of get_table_download_link
+
     
 def eda():
     st.header('Dataset Siswa')
@@ -308,8 +309,30 @@ def apps():
         
 #end of apps
 
+@st.cache(allow_output_mutation=True)
+def get_base64_of_bin_file(bin_file):
+    with open(bin_file, 'rb') as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
+
+
 def home():
-    st.header("Selamat Datang")
+    #st.title('Download')
+    main_bg = "home.jpg"
+    main_bg_ext = "jpg"
+    st.markdown(
+        f"""
+        <style>
+        .main {{
+            background: url(data:image/{main_bg_ext};base64,{base64.b64encode(open(main_bg, "rb").read()).decode()});
+              background-position: center;
+              background-repeat: no-repeat;
+              background-size: contain;
+        }}
+        """,
+        unsafe_allow_html=True
+    )
+    
     
 #end of home  
     
